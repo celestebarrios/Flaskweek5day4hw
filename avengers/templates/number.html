@@ -1,11 +1,12 @@
+{%extends 'base.html'%}
 {%block content%}
 <h1 class = "justify-content-center">Registered Phone Numbers</h1>
 <form action = "" method = "get">
     {{form.hidden_tag()}}
     <div class = "form-group">
     <fieldset>
-        {{form.name.label}}
-        {{form.name(class = "form-control",placeholder="PhoneBook Names")}}
+        {{form.username.label}}
+        {{form.username(class = "form-control",placeholder="PhoneBook Names")}}
     </fieldset>
     <fieldset>        
         {{form.number.label}}

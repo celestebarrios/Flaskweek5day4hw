@@ -1,24 +1,104 @@
-from avengers import app
-from flask import render_template, request
+from avengers import app, db, Message, mail
+from flask import render_template, request, redirect, url_for
 #Import for Forms
-from avengers.forms import Form
-
-#Home Route
-@app.route('/',methods = ['GET','POST'])
+from avengers.forms import LoginForm, UserInfoForm
+#Import Model
+from avengers.models import User, Post,check_password_hash
+#Import for Flask Login --login_required, login_user, current_user, log_out
+from flask_login import login_required, login_user, current_user, logout_user 
+# Home Route
+@app.route('/')
 def home():
-    return render_template("home.html")
+    form = Post.query.all()
+    return render_template("home.html", form = form)
 
-#Registered Phone Number
-@app.route('/phonebook', methods = ['GET','POST'])
-def phonebook():
-    names = {"Iron Man":773-996-6005 , "Thor":708-788-7010, "Wasp":847-340-6792,"Ant-Man":217-715-1349,  "Hulk":217-620-7346 }
-    return render_template("phonebook.html", names = names)
-#UPDATE
-@app.route('/update', methods=['GET', 'POST'])
-def update():
-    update = Form()
-    if request.method == "POST" and update.validate():   
-        names = update.names.data
-        numbers = update.numbers.data
-        print('\n', names, numbers)
-    return render_template('update.html',update=update)
+
+# CREATE Number
+@app.route('/register', methods=['GET','POST'])
+def register():
+    form = UserInfoForm()
+    if request.method == 'POST' and form.validate():
+        #Get Information
+        username = form.username.data
+        password = form.password.data
+        email = form.email.data
+        number = form.number.data
+        print("\n",username,password,email, number)#to make sure we have the correct data
+        #Create an instance of User
+        user = User(username, email, password, number)
+        #Open and insert into database
+        db.session.add(user)
+        #Save info into database
+        db.session.commit()
+
+        #flask Email Sender
+        msg = Message(f'Thanks for signing up{email}', recipients=[email])
+        msg.body =('Congrats on signing up! Looking forward to your posts!')
+        msg.html = ('<h1 >Welcome to Avengers Forum</h1>''<p>This will be super duper!</p>')
+
+        mail.send(msg)
+
+    return render_template('register.html', form = form)
+#UPDATE 
+@app.route('/number/update/<int:number_id>', methods= ['GET','POST'])
+@login_required
+def number_update(number_id):
+    number = Post.query.get_or_404(number_id)
+    update_form = UserInfoForm()
+    if request.method == 'POST' and update_form.validate():
+        update = update_form.number.data
+        username = update_form.username.data
+        user_id = current_user.id
+        print(update, username,user_id)
+
+        #update will get added to the DB
+        update.number = number
+        update.username = username
+        update.user_id = user_id
+
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('number_update.html', update_form = update_form)
+
+#DELETE Number
+@app.route('/number/delete/<int:number_id>', methods = ['GET','POST'])
+@login_required
+def number_delete(number_id):
+    update_form = UserInfoForm()
+    if request.method == 'POST' and update_form.validate():
+        user_id = current_user.id
+        print(update, username,user_id)
+        number = User.query.get_or_404(number_id)
+        db.session.delete(number)
+        db.session.commit()
+        return redirect(url_for('home'))
+    return render_template('number_update.html', update_form = update_form)
+    
+@app.route('/number_detail/<int:number_id>')
+@login_required
+def number_detail(number_id):
+    number = Post.query.get_or_404(number_id)
+    return render_template('number_detail.html', number = number)
+
+#Login Form Route
+@app.route('/login', methods= ['GET','POST'])
+def login():
+    form = LoginForm()
+    if request.method == 'POST' and form.validate():
+        email = form.email.data
+        password = form.password.data
+        logged_user = User.query.filter(User.email == email).first()
+        logged_user1 = User.query.filter(User.number == number).first()
+        if logged_user and logged_user1 and check_password_hash(logged_user.password, password):
+            login_user(logged_user)
+            login_user(logged_user1)
+            return redirect(url_for('home'))
+        else:
+            return redirect(url_for('login'))
+
+#Logout
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
+

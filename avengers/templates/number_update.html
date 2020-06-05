@@ -1,0 +1,24 @@
+{%extends 'base.html'%}
+
+{%block content%}
+<div class="container">
+    <h2>What would you like your new number to be?</h2>
+    <form action="" method="post">
+        {{update_form.hidden_tag()}}
+        <div class="form-group">
+            <fieldset>
+                {{update_form.username.label}}
+                {{update_form.username(class = "form-control", placeholder = "Update Names")}}
+                
+            </fieldset>
+            <fieldset>
+                {{update_form.update.label}}
+                {{update_form.update(class = "form-control", placeholder = "New Updated Number")}}
+
+
+            </fieldset>
+            {{update_form.submit(class = "btn btn-primary")}}
+        </div>
+    </form> 
+</div>
+{%endblock content%}
