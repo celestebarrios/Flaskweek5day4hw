@@ -3,17 +3,17 @@ from flask import render_template, request, redirect, url_for
 #Import for Forms
 from avengers.forms import LoginForm, UserInfoForm
 #Import Model
-from avengers.models import User, Post,check_password_hash
+from avengers.models import User, Number,check_password_hash
 #Import for Flask Login --login_required, login_user, current_user, log_out
 from flask_login import login_required, login_user, current_user, logout_user 
 # Home Route
 @app.route('/')
 def home():
-    form = Post.query.all()
+    form = Number.query.all()
     return render_template("home.html", form = form)
 
 
-# CREATE Number
+# CREATE User
 @app.route('/register', methods=['GET','POST'])
 def register():
     form = UserInfoForm()
@@ -22,10 +22,9 @@ def register():
         username = form.username.data
         password = form.password.data
         email = form.email.data
-        number = form.number.data
-        print("\n",username,password,email, number)#to make sure we have the correct data
+        print("\n",username,password,email)#to make sure we have the correct data
         #Create an instance of User
-        user = User(username, email, password, number)
+        user = User(username, email, password)
         #Open and insert into database
         db.session.add(user)
         #Save info into database
@@ -39,11 +38,30 @@ def register():
         mail.send(msg)
 
     return render_template('register.html', form = form)
+#Create Number
+@app.route('/number', methods=['GET','POST'] )
+@login_required
+def number():
+    form = NumberForm()
+    if request.method == 'POST' and form.validate():
+        #Get Information
+        number = form.number.data
+        number_update = form.number_update.data
+        print(number)#to make sure we have the correct data
+        #Create an instance of User
+        user = Number(number, number_update)
+        #Open and insert into database
+        db.session.add(user)
+        #Save info into database
+        db.session.commit()
+    return render_template('number.html', form = form)
+
+
 #UPDATE 
 @app.route('/number/update/<int:number_id>', methods= ['GET','POST'])
 @login_required
 def number_update(number_id):
-    number = Post.query.get_or_404(number_id)
+    number = Number.query.get_or_404(number_id)
     update_form = UserInfoForm()
     if request.method == 'POST' and update_form.validate():
         update = update_form.number.data
@@ -61,18 +79,15 @@ def number_update(number_id):
     return render_template('number_update.html', update_form = update_form)
 
 #DELETE Number
-@app.route('/number/delete/<int:number_id>', methods = ['GET','POST'])
+@app.route('/number/delete/<int:number_id>', methods = ['POST'])
 @login_required
 def number_delete(number_id):
-    update_form = UserInfoForm()
-    if request.method == 'POST' and update_form.validate():
-        user_id = current_user.id
-        print(update, username,user_id)
-        number = User.query.get_or_404(number_id)
+    number = User.query.get_or_404(number_id)
+    if request.method == 'POST':
         db.session.delete(number)
         db.session.commit()
         return redirect(url_for('home'))
-    return render_template('number_update.html', update_form = update_form)
+   
     
 @app.route('/number_detail/<int:number_id>')
 @login_required

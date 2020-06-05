@@ -18,3 +18,7 @@ class LoginForm(FlaskForm):
     number = StringField("Phone Number",validators=[DataRequired()])
 
     submit=SubmitField()
+class NumberForm(FlaskForm):
+    number = StringField("Phone Number",validators=[DataRequired()])
+    updated_number = StringField("New Number",validators=[DataRequired()])
+    submit=SubmitField()
